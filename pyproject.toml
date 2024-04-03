@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "nltk-tree-extensions"
+version = "3.7.0.1.0"
+description = "An extension module for nltk.tree"
+authors = ["Nori Hayashi <net@hayashi-lin.net>"]
+readme = "README.md"
+packages = [
+    { include = "nltk_tree_ext" },
+    { include = "nltk-stubs" },
+]
+license = "Apache-2.0"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+nltk = "^3.7"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.1.1"
+mypy = "^1.9.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
