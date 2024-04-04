@@ -17,9 +17,11 @@ import nltk_tree_ext.funcs as funcs
 __all__ = ["Tree", "NODE", "LEAF", "T"]
 
 NODE = TypeVar("NODE")
+NODE_NEW = TypeVar("NODE_NEW")
 LEAF = TypeVar("LEAF")
 LEAF_NEW = TypeVar("LEAF_NEW")
 D = TypeVar("D")
+R = TypeVar("R")
 T = TypeVar("T", bound="Tree")
 
 _INDEX = SupportsIndex | slice | Sequence[SupportsIndex]
@@ -155,7 +157,39 @@ class Tree(Generic[NODE, LEAF], list[Tree[NODE, LEAF] | LEAF]):
     # End
     # ------
 
+    # ------
     # Additional methods
+    # ------
+
+    @overload
+    def map(
+        self: Tree[NODE, LEAF],
+        func_node: None = None,
+        func_leaf: None = None,
+    ) -> Tree[NODE, LEAF]: ...
+    @overload
+    def map(
+        self: Tree[NODE, LEAF],
+        func_node: None = None,
+        func_leaf: Callable[[LEAF], LEAF_NEW] = lambda x: x,
+    ) -> Tree[NODE, LEAF_NEW]: ...
+    @overload
+    def map(
+        self: Tree[NODE, LEAF],
+        func_node: Callable[[NODE], NODE_NEW],
+        func_leaf: None = None,
+    ) -> Tree[NODE_NEW, LEAF]: ...
+    @overload
+    def map(
+        self: Tree[NODE, LEAF],
+        func_node: Callable[[NODE], NODE_NEW],
+        func_leaf: Callable[[LEAF], LEAF_NEW],
+    ) -> Tree[NODE_NEW, LEAF_NEW]: ...
+    def fold(
+        self: Tree[NODE, LEAF],
+        func: Callable[[NODE, Sequence[R]], R],
+        init: Callable[[LEAF], R],
+    ) -> R: ...
     @classmethod
     def fromlist_as_unary(
         cls: Type[Tree[NODE, LEAF]],
@@ -192,6 +226,5 @@ class Tree(Generic[NODE, LEAF], list[Tree[NODE, LEAF] | LEAF]):
     ]: ...
     def encode_skeleton(self: Tree[NODE, LEAF]) -> str: ...
     def encode_skeleton_nodes_leaves(
-        self: Tree[NODE, LEAF],
-        indices: dict[NODE | LEAF, str] | None = None
+        self: Tree[NODE, LEAF], indices: dict[NODE | LEAF, str] | None = None
     ) -> tuple[str, dict[NODE | LEAF, str]]: ...

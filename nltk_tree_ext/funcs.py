@@ -1,15 +1,81 @@
 from enum import IntEnum
-from typing import Literal, Sequence, Type, TypeVar, Callable
+from typing import Literal, Sequence, Type, TypeVar, Callable, overload
 from collections.abc import Iterable, Iterator
-from io import StringIO
 
 from nltk.tree import Tree
 
 NODE = TypeVar("NODE")
+NODE_NEW = TypeVar("NODE_NEW")
 LEAF = TypeVar("LEAF")
 LEAF_NEW = TypeVar("LEAF_NEW")
 D = TypeVar("D")
+R = TypeVar("R")
 
+
+@overload
+def map(
+    self: Tree[NODE, LEAF],
+    func_node: None = None,
+    func_leaf: None = None,
+) -> Tree[NODE, LEAF]: ...
+@overload
+def map(
+    self: Tree[NODE, LEAF],
+    func_node: None = None,
+    func_leaf: Callable[[LEAF], LEAF_NEW] = lambda x: x,
+) -> Tree[NODE, LEAF_NEW]: ...
+@overload
+def map(
+    self: Tree[NODE, LEAF],
+    func_node: Callable[[NODE], NODE_NEW],
+    func_leaf: None = None,
+) -> Tree[NODE_NEW, LEAF]: ...
+@overload
+def map(
+    self: Tree[NODE, LEAF],
+    func_node: Callable[[NODE], NODE_NEW],
+    func_leaf: Callable[[LEAF], LEAF_NEW],
+) -> Tree[NODE_NEW, LEAF_NEW]: ...
+
+def map(
+    self,
+    func_node = None,
+    func_leaf = None,
+):
+    """
+    Map the nodes and leaves of the tree.
+    """
+    return Tree(
+        func_node(label := self.label()) if func_node else label,
+        [
+            (
+                map(child, func_node, func_leaf)
+                if isinstance(child, Tree)
+                else func_leaf(child) if func_leaf else child
+            )
+            for child in self
+        ],
+    )
+
+def fold(
+    self: Tree[NODE, LEAF],
+    func: Callable[[NODE, Sequence[R]], R],
+    init: Callable[[LEAF], R],
+) -> R:
+    """
+    Fold the tree.
+    """
+    return func(
+        self.label(),
+        [
+            (
+                fold(child, func, init)
+                if isinstance(child, Tree)
+                else init(child)
+            )
+            for child in self
+        ],
+    )
 
 def fromlist_as_unary(
     cls: Type[Tree[NODE, LEAF]],
@@ -326,6 +392,7 @@ def to_tokens(
 
 ORD_START = ord(")") + 1  # 43
 
+
 def encode_skeleton(self: Tree[NODE, LEAF]) -> str:
     """
     Extract the skeleton of the tree.
@@ -342,16 +409,18 @@ def encode_skeleton(self: Tree[NODE, LEAF]) -> str:
         (
             "("
             if token == TokenType.OPEN
-            else ")" if token == TokenType.CLOSE
-            else "." if token[0] == TokenType.LEAF
-            else ""
+            else (
+                ")"
+                if token == TokenType.CLOSE
+                else "." if token[0] == TokenType.LEAF else ""
+            )
         )
         for token in to_tokens(self)
     )
 
+
 def encode_skeleton_nodes_leaves(
-    self: Tree[NODE, LEAF],
-    indices: dict[NODE | LEAF, str] | None = None
+    self: Tree[NODE, LEAF], indices: dict[NODE | LEAF, str] | None = None
 ) -> tuple[str, dict[NODE | LEAF, str]]:
     """
     Encode the skeleton of the tree with the nodes and leaves replaced by placeholders.
@@ -382,9 +451,9 @@ def encode_skeleton_nodes_leaves(
     return (
         "".join(
             (
-                "(" if token == TokenType.OPEN
-                else ")" if token == TokenType.CLOSE
-                else indices[token[1]]
+                "("
+                if token == TokenType.OPEN
+                else ")" if token == TokenType.CLOSE else indices[token[1]]
             )
             for token in to_tokens(self)
         ),
