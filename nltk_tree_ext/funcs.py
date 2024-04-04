@@ -37,16 +37,17 @@ def map(
     func_leaf: Callable[[LEAF], LEAF_NEW],
 ) -> Tree[NODE_NEW, LEAF_NEW]: ...
 
+
 def map(
     self,
-    func_node = None,
-    func_leaf = None,
+    func_node=None,
+    func_leaf=None,
 ):
     """
     Map the nodes and leaves of the tree.
     """
     return Tree(
-        func_node(label := self.label()) if func_node else label,
+        func_node(label := self.label()) if func_node else self.label(),
         [
             (
                 map(child, func_node, func_leaf)
@@ -56,6 +57,7 @@ def map(
             for child in self
         ],
     )
+
 
 def fold(
     self: Tree[NODE, LEAF],
@@ -68,14 +70,11 @@ def fold(
     return func(
         self.label(),
         [
-            (
-                fold(child, func, init)
-                if isinstance(child, Tree)
-                else init(child)
-            )
+            (fold(child, func, init) if isinstance(child, Tree) else init(child))
             for child in self
         ],
     )
+
 
 def fromlist_as_unary(
     cls: Type[Tree[NODE, LEAF]],
