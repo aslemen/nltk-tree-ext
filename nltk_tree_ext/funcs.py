@@ -1,6 +1,9 @@
 from enum import IntEnum
+import itertools
 from typing import Literal, Sequence, Type, TypeVar, Callable, overload
 from collections.abc import Iterable, Iterator
+
+import rapidfuzz
 
 from nltk.tree import Tree
 
@@ -186,6 +189,83 @@ def inspect_unary_nonterminal(
         return res[0], res[1]
     else:
         return default
+
+
+def iter_nodes_depth_first(self: Tree[NODE, LEAF]) -> Iterator[NODE]:
+    """
+    Iterate over the nodes of the tree in depth-first order.
+
+    Examples
+    --------
+    >>> from nltk.tree import Tree
+    >>> Tree.iter_nodes_depth_first = iter_nodes_depth_first
+    >>> tree = Tree.fromstring("(S (NP (DT the) (NN cat)) (VP (VBZ is) (ADJP (JJ cute))))")
+    >>> for node in tree.iter_nodes_depth_first():
+    >>>     print(node)
+    ... S
+    ... NP
+    ... DT
+    ... NN
+    ... VP
+    ... VBZ
+    ... ADJP
+    ... JJ
+    """
+    pointer_stack: list[tuple[Tree[NODE, LEAF], int]] = [(self, 0)]
+    while pointer_stack:
+        current_node, child_pointer = pointer_stack.pop()
+
+        if child_pointer < len(current_node):
+            child = current_node[child_pointer]
+            if isinstance(child, Tree):
+                pointer_stack.append((current_node, child_pointer + 1))
+                pointer_stack.append((child, 0))
+            yield current_node.label()
+        # else:
+        # do nothing
+
+
+def iter_nodes_leaves_depth_first(self: Tree[NODE, LEAF]) -> Iterator[NODE | LEAF]:
+    """
+    Iterate over the nodes of the tree in depth-first order.
+
+    Examples
+    --------
+    >>> from nltk.tree import Tree
+    >>> Tree.iter_nodes_depth_first = iter_nodes_depth_first
+    >>> tree = Tree.fromstring("(S (NP (DT the) (NN cat)) (VP (VBZ is) (ADJP (JJ cute))))")
+    >>> for node in tree.iter_nodes_depth_first():
+    >>>     print(node)
+    ... S
+    ... NP
+    ... DT
+    ... the
+    ... NN
+    ... cat
+    ... VP
+    ... VBZ
+    ... is
+    ... ADJP
+    ... JJ
+    ... cute
+    """
+    pointer_stack: list[tuple[Tree[NODE, LEAF] | LEAF, int]] = [(self, 0)]
+    while pointer_stack:
+        current_node, child_pointer = pointer_stack.pop()
+
+        if isinstance(current_node, Tree):
+            if child_pointer < len(current_node):
+                child = current_node[child_pointer]
+                if isinstance(child, Tree):
+                    pointer_stack.append((current_node, child_pointer + 1))
+                    pointer_stack.append((child, 0))
+                else:
+                    yield child
+                yield current_node.label()
+        else:
+            yield current_node
+        # else:
+        # do nothing
 
 
 def iter_leaves_with_branches(
@@ -458,3 +538,47 @@ def encode_skeleton_nodes_leaves(
         ),
         indices,
     )
+
+
+def levenshtein_ratio_skeleton(
+    self: Tree[NODE, LEAF], other: Tree[NODE, LEAF]
+) -> float:
+    """
+    Approximately measure the "similarity" between two trees by using the Levenshtein distance between the serializations of the skeletons of two trees.
+
+    Examples
+    --------
+    >>> from nltk.tree import Tree
+    >>> Tree.levenshtein_ratio_skeleton = levenshtein_ratio_skeleton
+    >>> tree1 = Tree.fromstring("(S (NP (DT the) (NN cat)) (VP (VBZ is) (ADJP (JJ cute))))")
+    >>> tree2 = Tree.fromstring("(S (NP (DT the) (NN cat)) (VP (VBZ is) (ADJP (JJ cute))))")
+    >>> tree1.levenshtein_ratio_skeleton(tree2)
+    ... 100
+    """
+    return rapidfuzz.fuzz.ratio(encode_skeleton(self), encode_skeleton(other))
+
+
+def levenshtein_ratio_skeleton_nodes_leaves(
+    self: Tree[NODE, LEAF], other: Tree[NODE, LEAF]
+) -> float:
+    """
+    Approximately measure the "similarity" between two trees by using the Levenshtein distance between the serializations of the nodes, leaves and skeletons of two trees.
+
+    Examples
+    --------
+    >>> from nltk.tree import Tree
+    >>> Tree.levenshtein_ratio_skeleton = levenshtein_ratio_skeleton
+    >>> tree1 = Tree.fromstring("(S (NP (DT the) (NN cat)) (VP (VBZ is) (ADJP (JJ cute))))")
+    >>> tree2 = Tree.fromstring("(S (NP (DT the) (NN cat)) (VP (VBZ is) (ADJP (JJ cute))))")
+    >>> tree1.levenshtein_ratio_skeleton(tree2)
+    ... 100
+    """
+    indices_set = set(
+        itertools.chain(
+            iter_nodes_leaves_depth_first(self), iter_nodes_leaves_depth_first(other)
+        )
+    )
+    indices = {nl: chr(ORD_START + i) for i, nl in enumerate(indices_set)}
+    enc1, _ = encode_skeleton_nodes_leaves(self, indices)
+    enc2, _ = encode_skeleton_nodes_leaves(other, indices)
+    return rapidfuzz.fuzz.ratio(enc1, enc2)

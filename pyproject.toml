@@ -13,6 +13,7 @@ license = "Apache-2.0"
 [tool.poetry.dependencies]
 python = "^3.11"
 nltk = "^3.7"
+rapidfuzz = "^3.7.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.1.1"

@@ -93,10 +93,33 @@ TREES_DFUDS = (
 )
 
 
-@pytest.mark.parametrize("tree_raw, indices, dfuds", TREES_DFUDS)
-def test_encode_skeleton_nodes_leaves(
-    tree_raw: str, indices: dict[str, str], dfuds: str
-):
-    tree = Tree.fromstring(tree_raw)
-    encoded, _ = funcs.encode_skeleton_nodes_leaves(tree, indices)
-    assert encoded == dfuds
+TREES_LEVENSHTEIN_RATIO = (
+    (
+        "(CONJ (NP-TMP (PP で)) (CONJ-PART-SUBWORD は))",
+        "(CONJ (NP-TMP☆PP で) (CONJ-PART-SUBWORD は))",
+        88.88888888888889,
+        80.0,
+    ),
+    (
+        "(CONJ (NP-TMP (PP (X で))) (CONJ-PART-SUBWORD は))",
+        "(CONJ (NP-TMP☆PP☆X で) (CONJ-PART-SUBWORD は))",
+        80.0,
+        71.42857142857143,
+    ),
+)
+
+
+@pytest.mark.parametrize(
+    "this, other, expected_skeleton, expected_all", TREES_LEVENSHTEIN_RATIO
+)
+def test_levenshtein_ratio_skeletons(this, other, expected_skeleton, expected_all):
+    this_parsed = Tree.fromstring(this)
+    other_parsed = Tree.fromstring(other)
+
+    assert (
+        funcs.levenshtein_ratio_skeleton(this_parsed, other_parsed) == expected_skeleton
+    )
+    assert (
+        funcs.levenshtein_ratio_skeleton_nodes_leaves(this_parsed, other_parsed)
+        == expected_all
+    )
