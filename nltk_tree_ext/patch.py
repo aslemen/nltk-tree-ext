@@ -13,3 +13,5 @@ Tree.unfold_nonterminal_unary_nodes = funcs.unfold_nonterminal_unary_nodes
 Tree.to_tokens = funcs.to_tokens
 Tree.encode_skeleton = funcs.encode_skeleton
 Tree.encode_skeleton_nodes_leaves = funcs.encode_skeleton_nodes_leaves
+Tree.levenshtein_ratio_skeleton = funcs.levenshtein_ratio_skeleton
+Tree.levenshtein_ratio_skeleton_nodes_leaves = funcs.levenshtein_ratio_skeleton_nodes_leaves
