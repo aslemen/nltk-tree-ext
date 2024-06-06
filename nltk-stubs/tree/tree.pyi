@@ -232,3 +232,20 @@ class Tree(Generic[NODE, LEAF], list[Tree[NODE, LEAF] | LEAF]):
     def levenshtein_ratio_skeleton_nodes_leaves(
         self, other: Tree[NODE, LEAF]
     ) -> float: ...
+    def str_oneline(
+        self,
+        print_node: Callable[[NODE], str] = str,
+        print_leaf: Callable[[LEAF], str] = str,
+        nodesep: str = "",
+        parens: str = "()",
+        quotes: bool = False,
+    ) -> str: ...
+    def print_oneline(
+        self,
+        stream: TextIO,
+        print_node: Callable[[NODE], str] = str,
+        print_leaf: Callable[[LEAF], str] = str,
+        nodesep: str = "",
+        parens: str = "()",
+        quotes: bool = False,
+    ) -> None: ...

@@ -123,3 +123,12 @@ def test_levenshtein_ratio_skeletons(this, other, expected_skeleton, expected_al
         funcs.levenshtein_ratio_skeleton_nodes_leaves(this_parsed, other_parsed)
         == expected_all
     )
+
+
+TREES_TO_PRINT = ("(CONJ (NP-TMP (PP (X で))) (CONJ-PART-SUBWORD は))",)
+
+
+@pytest.mark.parametrize("tree_raw", TREES_TO_PRINT)
+def test_str_oneline(tree_raw: str):
+    tree_parsed = Tree.fromstring(tree_raw)
+    assert funcs.str_oneline(tree_parsed) == tree_raw

@@ -1,6 +1,7 @@
 from enum import IntEnum
+import io
 import itertools
-from typing import Literal, Sequence, Type, TypeVar, Callable, overload
+from typing import Literal, Sequence, TextIO, Type, TypeVar, Callable, overload
 from collections.abc import Iterable, Iterator
 
 import rapidfuzz
@@ -582,3 +583,44 @@ def levenshtein_ratio_skeleton_nodes_leaves(
     enc1, _ = encode_skeleton_nodes_leaves(self, indices)
     enc2, _ = encode_skeleton_nodes_leaves(other, indices)
     return rapidfuzz.fuzz.ratio(enc1, enc2)
+
+
+def str_oneline(
+    self: Tree[NODE, LEAF],
+    print_node: Callable[[NODE], str] = str,
+    print_leaf: Callable[[LEAF], str] = str,
+    nodesep: str = "",
+    parens: str = "()",
+    quotes: bool = False,
+) -> str:
+    stream = io.StringIO()
+    print_oneline(self, stream, print_node, print_leaf, nodesep, parens, quotes)
+    return stream.getvalue()
+
+
+def print_oneline(
+    self: Tree[NODE, LEAF],
+    stream: TextIO,
+    print_node: Callable[[NODE], str] = str,
+    print_leaf: Callable[[LEAF], str] = str,
+    nodesep: str = "",
+    parens: str = "()",
+    quotes: bool = False,
+) -> None:
+    p_open = parens[0]
+    p_close = parens[1]
+
+    def _go(tree: Tree[NODE, LEAF]) -> None:
+        stream.write(p_open)
+        stream.write(print_node(tree.label()))
+        stream.write(nodesep)
+        for child in tree:
+            if isinstance(child, Tree):
+                stream.write(" ")
+                _go(child)
+            else:
+                stream.write(" ")
+                stream.write(print_leaf(child))
+        stream.write(p_close)
+
+    _go(self)
