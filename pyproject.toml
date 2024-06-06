@@ -1,15 +1,12 @@
 [tool.poetry]
 name = "nltk-tree-extensions"
-version = "3.7.0.2.1"
+version = "3.7.0.3.0"
 description = "An extension module for nltk.tree"
 authors = ["Nori Hayashi <net@hayashi-lin.net>"]
 homepage = "https://pypi.com/project/nltk-tree-extensions"
 repository = "https://github.com/aslemen/nltk-tree-extensions"
 readme = "README.md"
-packages = [
-    { include = "nltk_tree_ext" },
-    { include = "nltk-stubs" },
-]
+packages = [{ include = "nltk_tree_ext" }, { include = "nltk-stubs" }]
 license = "Apache-2.0"
 
 [tool.poetry.dependencies]
